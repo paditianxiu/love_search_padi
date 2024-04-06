@@ -3,4 +3,4 @@
 
 ## Screenshoot
 * Mobile
-* ![alt text](/.media/screenshoot.png "Android")
+* ![alt text](/media/screenshoot.png "Android")
