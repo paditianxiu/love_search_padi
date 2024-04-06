@@ -3,5 +3,6 @@
 
 ## Screenshoot
 * Mobile
-*  ![alt text](/media/PromotionalPicture.png "PromotionalPicture")
 * ![alt text](/media/screenshoot.png "Android")
+* Promotional Picture
+*  ![alt text](/media/PromotionalPicture.png "PromotionalPicture")
