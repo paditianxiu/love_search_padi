@@ -1,12 +1,12 @@
 // ignore_for_file: file_names
 import 'dart:convert';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/services.dart';
 import 'package:html/parser.dart';
 import 'package:love_search_padi/pages/player/main.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -52,8 +52,6 @@ class _MyHomePageState extends State<HomePage> with TickerProviderStateMixin {
     return response.data;
   }
 
-
-
   getHotData() async {
     var response = await Dio().get(
         "https://movie.douban.com/j/search_subjects?&type=movie&sort=recommend&tag=%E7%83%AD%E9%97%A8&page_limit=21&page_start=1");
@@ -64,7 +62,6 @@ class _MyHomePageState extends State<HomePage> with TickerProviderStateMixin {
           hotImgUrlList.add(objectList[i]['cover']);
           hotTitleList.add(objectList[i]['title']);
         }
-
       });
     }
   }
@@ -93,9 +90,6 @@ class _MyHomePageState extends State<HomePage> with TickerProviderStateMixin {
       }
     }
   }
-
-
-
 
   getSearchData() async {
     var response = await Dio().get("https://wds.ecsxs.com/216237.json");
@@ -435,7 +429,8 @@ class _MyHomePageState extends State<HomePage> with TickerProviderStateMixin {
         });
   }
 
-  buildGridItem(String title, String imgUrl, String time, bool canSearch, Map map, index) {
+  buildGridItem(String title, String imgUrl, String time, bool canSearch,
+      Map map, index) {
     return GestureDetector(
       onTap: () {
         if (canSearch) {
@@ -457,7 +452,7 @@ class _MyHomePageState extends State<HomePage> with TickerProviderStateMixin {
                   Column(
                     children: [
                       Expanded(
-                          child: CachedNetworkImage(
+                          child:CachedNetworkImage(
                             httpHeaders:{'User-Agent': 'PostmanRuntime/7.37.0'},
                             width: 100,
                             height: 100,
@@ -465,11 +460,12 @@ class _MyHomePageState extends State<HomePage> with TickerProviderStateMixin {
                             fit: BoxFit.cover,
                             placeholder: (context, url) => const CircularProgressIndicator(),
                             errorWidget: (context, url, error) => Icon(Icons.error),
-                              // Icon(Icons.error)
+                            // Icon(Icons.error)
                             // 你可以设置cacheManager来自定义缓存的行为，如果不设置，会使用默认的缓存管理器
                             // cacheManager: ,
                           ),
 
+                      //
                       //     FutureBuilder<Uint8List>(
                       //   future: loadImageFromUrl(imgUrl),
                       //   builder: (context, snapshot) {
@@ -486,7 +482,7 @@ class _MyHomePageState extends State<HomePage> with TickerProviderStateMixin {
                       //       child: CircularProgressIndicator(),
                       //     );
                       //   },
-                      // ),
+                      // )
                       ),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
