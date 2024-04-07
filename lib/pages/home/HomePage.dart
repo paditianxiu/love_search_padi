@@ -1,6 +1,7 @@
 // ignore_for_file: file_names
 import 'dart:convert';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/services.dart';
@@ -451,23 +452,40 @@ class _MyHomePageState extends State<HomePage> with TickerProviderStateMixin {
                   Column(
                     children: [
                       Expanded(
-                          child: FutureBuilder<Uint8List>(
-                        future: loadImageFromUrl(imgUrl),
-                        builder: (context, snapshot) {
-                          if (snapshot.hasData) {
-                            return Image.memory(
-                                width: double.infinity,
-                                snapshot.data ?? Uint8List(0),
-                                fit: BoxFit.cover);
-                          } else if (snapshot.hasError) {
-                            return Center(
-                                child: Text('Error: ${snapshot.error}'));
-                          }
-                          return const Center(
+                        child: CachedNetworkImage(
+                          httpHeaders: const {
+                            'User-Agent': 'PostmanRuntime/7.37.0'
+                          },
+                          width: double.infinity,
+                          height: 100,
+                          imageUrl: imgUrl,
+                          fit: BoxFit.cover,
+                          placeholder: (context, url) => const Center(
                             child: CircularProgressIndicator(),
-                          );
-                        },
-                      )),
+                          ),
+                          errorWidget: (context, url, error) => const Center(
+                            child: Icon(Icons.error),
+                          ),
+                        ),
+                        //
+                        //     FutureBuilder<Uint8List>(
+                        //   future: loadImageFromUrl(imgUrl),
+                        //   builder: (context, snapshot) {
+                        //     if (snapshot.hasData) {
+                        //       return Image.memory(
+                        //           width: double.infinity,
+                        //           snapshot.data ?? Uint8List(0),
+                        //           fit: BoxFit.cover);
+                        //     } else if (snapshot.hasError) {
+                        //       return Center(
+                        //           child: Text('Error: ${snapshot.error}'));
+                        //     }
+                        //     return const Center(
+                        //       child: CircularProgressIndicator(),
+                        //     );
+                        //   },
+                        // )
+                      ),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
