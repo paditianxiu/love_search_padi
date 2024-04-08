@@ -182,6 +182,7 @@ class _FavoritePageState extends State<FavoritePage> {
                           Column(children: [
                             Expanded(
                               child: CachedNetworkImage(
+                                  width: double.infinity,
                                   imageUrl: jsonDecode(
                                       favoriteList[index].toString())["imgUrl"],
                                   fit: BoxFit.cover,
