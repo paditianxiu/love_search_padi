@@ -36,6 +36,7 @@ class _HistroyPageState extends State<HistroyPage> {
           title: const Text('历史记录'),
           actions: [
             IconButton(
+                tooltip: '清空历史记录',
                 onPressed: () {
                   //final context = this.context;
                   showDialog<void>(
@@ -226,6 +227,7 @@ class _HistroyPageState extends State<HistroyPage> {
                           Column(children: [
                             Expanded(
                               child: CachedNetworkImage(
+                                  width: double.infinity,
                                   imageUrl: jsonDecode(
                                       historyList[index].toString())["imgUrl"],
                                   fit: BoxFit.cover,
