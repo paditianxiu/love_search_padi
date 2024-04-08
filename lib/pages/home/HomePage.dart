@@ -24,6 +24,8 @@ class _MyHomePageState extends State<HomePage> with TickerProviderStateMixin {
   List<String> laterImgUrlList = <String>[];
   List<String> laterTitleList = <String>[];
   List<String> laterTimeList = <String>[];
+  List<String> top250ImgUrlList = <String>[];
+  List<String> top250TitleList = <String>[];
   int currentIndex = 0;
   bool _isDisposed = false;
   var searchFilmController = TextEditingController();
@@ -31,9 +33,10 @@ class _MyHomePageState extends State<HomePage> with TickerProviderStateMixin {
   void initState() {
     super.initState();
     getSearchData();
-    _tabController = TabController(vsync: this, length: 2);
+    _tabController = TabController(vsync: this, length: 3);
     getHotData();
     getLaterData();
+    getTop250Data();
   }
 
   @override
@@ -63,6 +66,25 @@ class _MyHomePageState extends State<HomePage> with TickerProviderStateMixin {
           hotTitleList.add(objectList[i]['title']);
         }
       });
+    }
+  }
+
+  getTop250Data() async {
+    var response = await Dio().get("https://movie.douban.com/top250");
+    if (!_isDisposed && mounted) {
+      var document = parse(response.data);
+      var itemList = document.querySelectorAll('.grid_view .item');
+
+      for (var item in itemList) {
+        var title = item.querySelector('.info .hd span')?.text;
+        var rating = item.querySelector('.info .bd .star .rating_num')?.text;
+        var imgUrl = item.querySelector('.pic img')?.attributes['src'];
+
+        if (title != null && rating != null && imgUrl != null) {
+          top250ImgUrlList.add(imgUrl);
+          top250TitleList.add(title);
+        }
+      }
     }
   }
 
@@ -150,26 +172,42 @@ class _MyHomePageState extends State<HomePage> with TickerProviderStateMixin {
               icon: const Icon(Icons.search)),
           const SizedBox(width: 10)
         ],
-        bottom: TabBar(controller: _tabController, tabs: const [
-          Tab(
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.whatshot),
-                Text('热门推荐'),
-              ],
-            ),
-          ),
-          Tab(
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.event_note),
-                Text('即将上映'),
-              ],
-            ),
-          ),
-        ]),
+        bottom: TabBar(
+            controller: _tabController,
+            isScrollable: true,
+            tabAlignment: TabAlignment.center,
+            tabs: const [
+              Tab(
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.whatshot),
+                    Text('热门推荐'),
+                  ],
+                ),
+              ),
+              Tab(
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.bookmark_outline),
+                    SizedBox(
+                      width: 2.0,
+                    ),
+                    Text('豆瓣排行'),
+                  ],
+                ),
+              ),
+              Tab(
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.event_note),
+                    Text('即将上映'),
+                  ],
+                ),
+              ),
+            ]),
       ),
       body: TabBarView(controller: _tabController, children: [
         ConstrainedBox(
@@ -185,6 +223,26 @@ class _MyHomePageState extends State<HomePage> with TickerProviderStateMixin {
                     itemBuilder: (BuildContext context, int index) {
                       return buildGridItem(hotTitleList[index],
                           hotImgUrlList[index], "", true, {}, index);
+                    })
+                : const Center(child: CircularProgressIndicator())),
+        ConstrainedBox(
+            constraints: const BoxConstraints.expand(),
+            child: top250ImgUrlList.isNotEmpty
+                ? GridView.builder(
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 3,
+                      childAspectRatio: 0.6,
+                    ),
+                    itemCount: top250ImgUrlList.length,
+                    itemBuilder: (BuildContext context, int index) {
+                      return buildGridItem(
+                          top250TitleList[index],
+                          top250ImgUrlList[index],
+                          "No.${index + 1}",
+                          true,
+                          {},
+                          index);
                     })
                 : const Center(child: CircularProgressIndicator())),
         ConstrainedBox(
@@ -251,6 +309,7 @@ class _MyHomePageState extends State<HomePage> with TickerProviderStateMixin {
     showModalBottomSheet(
         context: context,
         isScrollControlled: true,
+        useSafeArea: true,
         builder: (BuildContext context) {
           return StatefulBuilder(
             builder: (BuildContext innerContext, StateSetter setState) {
@@ -265,7 +324,16 @@ class _MyHomePageState extends State<HomePage> with TickerProviderStateMixin {
                     mainAxisSize: MainAxisSize.min,
                     children: <Widget>[
                       ListTile(
-                        leading: const Icon(Icons.movie),
+                        leading: IconButton(
+                          tooltip: '关闭',
+                          icon: const Icon(
+                            Icons.keyboard_arrow_down,
+                            size: 30.0,
+                          ),
+                          onPressed: () {
+                            Navigator.of(context).pop();
+                          },
+                        ),
                         trailing: FilledButton.icon(
                             onPressed: () async {
                               if (searchFilmController.text.isEmpty) {
@@ -398,30 +466,35 @@ class _MyHomePageState extends State<HomePage> with TickerProviderStateMixin {
                           isScrollable: true,
                           controller: _tabSearchController,
                           tabs: searchTabs.map((e) => Tab(text: e)).toList()),
-                      ConstrainedBox(
-                          constraints: BoxConstraints(
-                            maxHeight: MediaQuery.of(context).size.height - 400,
-                          ),
-                          child: !isSearch
-                              ? GridView.builder(
-                                  gridDelegate:
-                                      const SliverGridDelegateWithFixedCrossAxisCount(
-                                    crossAxisCount: 3,
-                                    childAspectRatio: 0.6,
-                                  ),
-                                  itemCount: vodNamelist.length,
-                                  itemBuilder:
-                                      (BuildContext context, int index) {
-                                    return buildGridItem(
-                                        vodNamelist[index],
-                                        vodPiclist[index],
-                                        vodClasslist[index],
-                                        false,
-                                        data0,
-                                        index);
-                                  })
-                              : const Center(
-                                  child: CircularProgressIndicator())),
+                      Expanded(
+                          child: Padding(
+                        padding: EdgeInsets.only(
+                          bottom: MediaQuery.of(context).viewInsets.bottom,
+                        ),
+                        child: !isSearch
+                            ? GridView.builder(
+                                shrinkWrap: true,
+                                gridDelegate:
+                                    const SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: 3,
+                                  childAspectRatio: 0.6,
+                                ),
+                                itemCount: vodNamelist.length,
+                                itemBuilder: (BuildContext context, int index) {
+                                  return buildGridItem(
+                                      vodNamelist[index],
+                                      vodPiclist[index],
+                                      vodClasslist[index],
+                                      false,
+                                      data0,
+                                      index);
+                                })
+                            : const Center(
+                                child: Padding(
+                                padding: EdgeInsets.all(16.0),
+                                child: CircularProgressIndicator(),
+                              )),
+                      )),
                     ],
                   ));
             },
@@ -467,24 +540,6 @@ class _MyHomePageState extends State<HomePage> with TickerProviderStateMixin {
                             child: Icon(Icons.error),
                           ),
                         ),
-                        //
-                        //     FutureBuilder<Uint8List>(
-                        //   future: loadImageFromUrl(imgUrl),
-                        //   builder: (context, snapshot) {
-                        //     if (snapshot.hasData) {
-                        //       return Image.memory(
-                        //           width: double.infinity,
-                        //           snapshot.data ?? Uint8List(0),
-                        //           fit: BoxFit.cover);
-                        //     } else if (snapshot.hasError) {
-                        //       return Center(
-                        //           child: Text('Error: ${snapshot.error}'));
-                        //     }
-                        //     return const Center(
-                        //       child: CircularProgressIndicator(),
-                        //     );
-                        //   },
-                        // )
                       ),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
