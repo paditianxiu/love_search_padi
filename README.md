@@ -1,5 +1,5 @@
 # love_search_padi
-* 影视搜索器  
+影视搜索器  
 [![Buttons Download]][Download]
 ## Screenshoot
 * Mobile
