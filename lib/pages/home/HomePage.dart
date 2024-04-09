@@ -254,7 +254,7 @@ class _MyHomePageState extends State<HomePage> with TickerProviderStateMixin {
                       crossAxisCount: 3,
                       childAspectRatio: 0.6,
                     ),
-                    itemCount: hotImgUrlList.length,
+                    itemCount: laterImgUrlList.length,
                     itemBuilder: (BuildContext context, int index) {
                       return buildGridItem(
                           laterTitleList[index],
