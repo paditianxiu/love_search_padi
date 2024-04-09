@@ -1,6 +1,5 @@
 # love_search_padi
-影视搜索器
-[![Buttons Online Preview]][Online Preview]
+*影视搜索器
 [![Buttons Download]][Download]
 ## Screenshoot
 * Mobile
@@ -8,7 +7,6 @@
 * Promotional Picture
 *  ![alt text](/media/PromotionalPicture.png "PromotionalPicture")
 
-[Online Preview]: https://liplum-dev.github.io/mimir/
 
 [Download]: https://github.com/paditianxiu/love_search_padi/releases/latest
 
