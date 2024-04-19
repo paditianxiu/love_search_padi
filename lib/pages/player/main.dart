@@ -1,9 +1,13 @@
 // ignore_for_file: library_private_types_in_public_api, duplicate_ignore
 
 import 'dart:convert';
+import 'dart:ffi';
 
 import 'package:fijkplayer/fijkplayer.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
+
 //import 'package:wakelock/wakelock.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -172,10 +176,38 @@ class _VideoScreenState extends State<VideoScreen>
       } else {}
     }
     player.setDataSource(urlListNew[currentCollection], autoPlay: true);
-
+    final List<double> speedList = [0.5, 1.0,1.5, 2.0,];
+    final List<String> menuOptions = ['X0.5', 'x1.0', 'X1.5' ,'X2.0'];
+    var localSpeed = "x1.0";
     return Scaffold(
         appBar: AppBar(
           actions: [
+            // IconButton(tooltip: "倍数", onPressed: (){}, icon: Icon(Icons.speed)),
+            PopupMenuButton(
+              onSelected: (String result) {
+                localSpeed = result;
+                player.setSpeed(speedList[menuOptions.indexOf(result)]);
+              },
+              icon: const Icon(Icons.speed),
+              itemBuilder: (BuildContext context) =>
+                  menuOptions.map((String choice) {
+                return PopupMenuItem<String>(
+                  value: choice,
+                  child: Row(
+                    children: [
+                      localSpeed == choice
+                          ? Icon(Icons.check,
+                              color: Theme.of(context).primaryColor)
+                          : const Icon(null),
+                      const SizedBox(
+                        width: 10,
+                      ),
+                      Text(choice)
+                    ],
+                  ),
+                );
+              }).toList(),
+            ),
             FavoriteToggleIconButton(
                 data: widget.data, pos: widget.pos, onStateChanged: () {}),
             const SizedBox(width: 10)
