@@ -25,6 +25,7 @@ class MyApp extends StatelessWidget {
             colorScheme: ColorScheme.fromSeed(seedColor: Colors.green),
             useMaterial3: true),
         debugShowCheckedModeBanner: false,
+        title: "爱搜片",
         home: const MainPage(),
         routes: {
           '/home': (context) => const HomePage(),
