@@ -5,7 +5,7 @@
 * Mobile
 * ![alt text](/media/screenshoot1.png "Android")
 * Promotional Picture
-*  ![alt text](/media/PromotionalPicture.png "PromotionalPicture")
+*  ![alt text](/media/screenshoot2.png "PromotionalPicture")
 
 
 [Download]: https://github.com/paditianxiu/love_search_padi/releases/latest
