@@ -4,7 +4,7 @@
 ## Screenshoot
 * Mobile
 * ![alt text](/media/screenshoot1.png "Android")
-* Promotional Picture
+* 宣传图
 *  ![alt text](/media/screenshoot2.png "PromotionalPicture")
 
 
