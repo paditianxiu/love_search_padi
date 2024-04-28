@@ -1,5 +1,6 @@
 // ignore_for_file: file_names
 import 'dart:convert';
+import 'dart:ffi';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
@@ -7,9 +8,11 @@ import 'package:dio/dio.dart';
 import 'package:flutter/services.dart';
 import 'package:html/parser.dart';
 import 'package:love_search_padi/pages/player/main.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
+
   @override
   State<HomePage> createState() => _MyHomePageState();
 }
@@ -19,8 +22,10 @@ class _MyHomePageState extends State<HomePage> with TickerProviderStateMixin {
   List<String> searchTabs = [];
   late TabController _tabSearchController;
   List<String> searchUrlList = <String>[];
+  List<String> searchBoolList = <String>[];
   List<String> hotImgUrlList = <String>[];
   List<String> hotTitleList = <String>[];
+  List<String> hotRateList = <String>[];
   List<String> laterImgUrlList = <String>[];
   List<String> laterTitleList = <String>[];
   List<String> laterTimeList = <String>[];
@@ -29,6 +34,7 @@ class _MyHomePageState extends State<HomePage> with TickerProviderStateMixin {
   int currentIndex = 0;
   bool _isDisposed = false;
   var searchFilmController = TextEditingController();
+
   @override
   void initState() {
     super.initState();
@@ -64,6 +70,7 @@ class _MyHomePageState extends State<HomePage> with TickerProviderStateMixin {
         for (var i = 0; i < objectList.length; i++) {
           hotImgUrlList.add(objectList[i]['cover']);
           hotTitleList.add(objectList[i]['title']);
+          hotRateList.add(objectList[i]['rate'].toString());
         }
       });
     }
@@ -71,18 +78,21 @@ class _MyHomePageState extends State<HomePage> with TickerProviderStateMixin {
 
   getTop250Data() async {
     var response = await Dio().get("https://movie.douban.com/top250");
-    if (!_isDisposed && mounted) {
-      var document = parse(response.data);
-      var itemList = document.querySelectorAll('.grid_view .item');
 
-      for (var item in itemList) {
-        var title = item.querySelector('.info .hd span')?.text;
-        var rating = item.querySelector('.info .bd .star .rating_num')?.text;
-        var imgUrl = item.querySelector('.pic img')?.attributes['src'];
+    var document = parse(response.data);
+    var itemList = document.querySelectorAll('.grid_view .item');
 
-        if (title != null && rating != null && imgUrl != null) {
-          top250ImgUrlList.add(imgUrl);
-          top250TitleList.add(title);
+    for (var item in itemList) {
+      var title = item.querySelector('.info .hd span')?.text;
+      var rating = item.querySelector('.info .bd .star .rating_num')?.text;
+      var imgUrl = item.querySelector('.pic img')?.attributes['src'];
+
+      if (title != null && rating != null && imgUrl != null) {
+        if (!_isDisposed && mounted) {
+          setState(() {
+            top250ImgUrlList.add(imgUrl);
+            top250TitleList.add(title);
+          });
         }
       }
     }
@@ -114,15 +124,19 @@ class _MyHomePageState extends State<HomePage> with TickerProviderStateMixin {
   }
 
   getSearchData() async {
-    var response = await Dio().get("https://wds.ecsxs.com/216237.json");
+    var response = await Dio()
+        .get("https://gitee.com/padi/padi/raw/master/lovesearch.json");
     var objectList = response.data as List;
     if (!_isDisposed && mounted) {
       setState(() {
         searchTabs.clear();
+        searchUrlList.clear();
+        searchBoolList.clear();
         debugPrint(objectList.length.toString());
         for (var i = 0; i < objectList.length; i++) {
           searchTabs.add(objectList[i]["name"]);
           searchUrlList.add(objectList[i]['url']);
+          searchBoolList.add(objectList[i]['push'].toString());
         }
         _tabSearchController =
             TabController(vsync: this, length: searchTabs.length);
@@ -131,6 +145,7 @@ class _MyHomePageState extends State<HomePage> with TickerProviderStateMixin {
   }
 
   bool isSearch = false;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -221,8 +236,13 @@ class _MyHomePageState extends State<HomePage> with TickerProviderStateMixin {
                     ),
                     itemCount: hotImgUrlList.length,
                     itemBuilder: (BuildContext context, int index) {
-                      return buildGridItem(hotTitleList[index],
-                          hotImgUrlList[index], "", true, {}, index);
+                      return buildGridItem(
+                          hotTitleList[index],
+                          hotImgUrlList[index],
+                          hotRateList[index],
+                          true,
+                          {},
+                          index);
                     })
                 : const Center(child: CircularProgressIndicator())),
         ConstrainedBox(
@@ -364,6 +384,15 @@ class _MyHomePageState extends State<HomePage> with TickerProviderStateMixin {
                                 return;
                               }
                               FocusScope.of(context).unfocus();
+                              if (searchBoolList[currentIndex] == "true") {
+                                var url = searchUrlList[currentIndex];
+                                if (await canLaunch(url)) {
+                                  await launch(url);
+                                } else {
+                                  throw 'Could not launch $url';
+                                }
+                                return;
+                              }
                               String currentSearchUrl =
                                   "${searchUrlList[currentIndex]}?ac=detail&wd=${Uri.encodeComponent(searchFilmController.text)}";
                               debugPrint(currentSearchUrl);
