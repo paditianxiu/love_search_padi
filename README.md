@@ -1,16 +1,15 @@
 # love_search_padi
+影视搜索器  
+[![Buttons Download]][Download]
+## Screenshoot
+Mobile
+![alt text](/media/screenshoot1.png "Android")
+宣传图
+![alt text](/media/screenshoot2.png "PromotionalPicture")
 
-A new Flutter project.
 
-## Getting Started
+[Download]: https://github.com/paditianxiu/love_search_padi/releases/latest
 
-This project is a starting point for a Flutter application.
+<!---------------------------------[ Buttons ]--------------------------------->
 
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+[Buttons Download]: https://img.shields.io/github/downloads/paditianxiu/love_search_padi/total?color=023a46&label=Download&logo=docusign&logoColor=white&style=for-the-badge&labelColor=034e5e
