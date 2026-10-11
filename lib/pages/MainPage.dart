@@ -1,11 +1,15 @@
 // ignore_for_file: file_names
 import 'package:flutter/material.dart';
-import 'package:love_search_padi/pages/home/MinePage.dart';
-import 'package:love_search_padi/pages/home/HomePage.dart';
-import 'package:love_search_padi/pages/home/ClassificationPage.dart';
+
+import '../widgets/app_layout.dart';
+import 'home/MinePage.dart';
+import 'home/HomePage.dart';
+import 'home/ClassificationPage.dart';
 
 class MainPage extends StatefulWidget {
-  const MainPage({super.key});
+  final List<Widget>? pages;
+
+  const MainPage({super.key, this.pages});
 
   @override
   State<MainPage> createState() => _MainPageState();
@@ -13,40 +17,111 @@ class MainPage extends StatefulWidget {
 
 class _MainPageState extends State<MainPage> {
   int currentPageIndex = 0;
-  var widgets = <Widget>[
-    const HomePage(),
-    const ClassificationPage(),
-    const MinePage(),
-  ];
+  late final _pages =
+      widget.pages ?? const [HomePage(), ClassificationPage(), MinePage()];
+
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-        bottomNavigationBar: NavigationBar(
-          onDestinationSelected: (int index) {
-            setState(() {
-              currentPageIndex = index;
-            });
-          },
-          //labelBehavior: NavigationDestinationLabelBehavior.onlyShowSelected,
-          selectedIndex: currentPageIndex,
-          destinations: const <Widget>[
-            NavigationDestination(
-              selectedIcon: Icon(Icons.home),
-              icon: Icon(Icons.home_outlined),
-              label: '主页',
-            ),
-            NavigationDestination(
-              icon: Icon(Icons.loyalty_outlined),
-              selectedIcon: Icon(Icons.loyalty),
-              label: '分类',
-            ),
-            NavigationDestination(
-              icon: Icon(Icons.people_outline),
-              selectedIcon: Icon(Icons.people),
-              label: '我的',
-            ),
-          ],
-        ),
-        body: IndexedStack(index: currentPageIndex, children: widgets));
+  void initState() {
+    super.initState();
+    assert(widget.pages == null || widget.pages!.length == 3);
   }
+
+  void _selectPage(int index) => setState(() => currentPageIndex = index);
+
+  @override
+  Widget build(BuildContext context) => LayoutBuilder(
+        builder: (context, constraints) {
+          final desktop =
+              constraints.maxWidth >= AppLayout.navigationBreakpoint;
+          final extended =
+              constraints.maxWidth >= AppLayout.expandedNavigationBreakpoint;
+          return Scaffold(
+            bottomNavigationBar: desktop
+                ? null
+                : NavigationBar(
+                    onDestinationSelected: _selectPage,
+                    selectedIndex: currentPageIndex,
+                    destinations: const [
+                      NavigationDestination(
+                        selectedIcon: Icon(Icons.home),
+                        icon: Icon(Icons.home_outlined),
+                        label: '主页',
+                      ),
+                      NavigationDestination(
+                        selectedIcon: Icon(Icons.loyalty),
+                        icon: Icon(Icons.loyalty_outlined),
+                        label: '分类',
+                      ),
+                      NavigationDestination(
+                        selectedIcon: Icon(Icons.people),
+                        icon: Icon(Icons.people_outline),
+                        label: '我的',
+                      ),
+                    ],
+                  ),
+            body: Row(
+              children: [
+                if (desktop) ...[
+                  SafeArea(
+                    child: NavigationRail(
+                      extended: extended,
+                      minExtendedWidth: 200,
+                      selectedIndex: currentPageIndex,
+                      onDestinationSelected: _selectPage,
+                      labelType: extended
+                          ? NavigationRailLabelType.none
+                          : NavigationRailLabelType.all,
+                      leading: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 24),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.movie_filter_outlined,
+                              color: Theme.of(context).colorScheme.primary,
+                              size: 32,
+                            ),
+                            if (extended) ...[
+                              const SizedBox(width: 12),
+                              Text(
+                                '爱搜片',
+                                style: Theme.of(context).textTheme.titleLarge,
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                      destinations: const [
+                        NavigationRailDestination(
+                          selectedIcon: Icon(Icons.home),
+                          icon: Icon(Icons.home_outlined),
+                          label: Text('主页'),
+                        ),
+                        NavigationRailDestination(
+                          selectedIcon: Icon(Icons.loyalty),
+                          icon: Icon(Icons.loyalty_outlined),
+                          label: Text('分类'),
+                        ),
+                        NavigationRailDestination(
+                          selectedIcon: Icon(Icons.people),
+                          icon: Icon(Icons.people_outline),
+                          label: Text('我的'),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const VerticalDivider(width: 1),
+                ],
+                Expanded(
+                  key: const ValueKey('main-content'),
+                  child: IndexedStack(
+                    index: currentPageIndex,
+                    children: _pages,
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      );
 }

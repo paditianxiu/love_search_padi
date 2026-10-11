@@ -1,6 +1,7 @@
 // ignore_for_file: file_names
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+
+import '../../widgets/app_layout.dart';
 
 // class ClassificationPage extends StatelessWidget {
 //   const ClassificationPage({super.key});
@@ -11,13 +12,63 @@ class ClassificationPage extends StatefulWidget {
   State<ClassificationPage> createState() => _MyClassificationPageState();
 }
 
-int currentTab1Index = 0;
-int currentTab2Index = 0;
-int currentTab3Index = 0;
-int currentTab4Index = 0;
-int currentTab5Index = 0;
-
 class _MyClassificationPageState extends State<ClassificationPage> {
+  int currentTab1Index = 0;
+  int currentTab2Index = 0;
+  int currentTab3Index = 0;
+  int currentTab4Index = 0;
+  int currentTab5Index = 0;
+
+  Widget _filterRow(
+    String label,
+    List<String> values,
+    int selected,
+    ValueChanged<int> onSelected,
+  ) =>
+      LayoutBuilder(
+        builder: (context, constraints) {
+          final chips = List.generate(
+            values.length,
+            (index) => ChoiceChip(
+              selected: index == selected,
+              onSelected: (_) => onSelected(index),
+              label: Text(values[index]),
+            ),
+          );
+          return Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(top: 12),
+                  child: SizedBox(
+                    width: 52,
+                    child: Text(label,
+                        style: Theme.of(context).textTheme.titleSmall),
+                  ),
+                ),
+                Expanded(
+                  child: constraints.maxWidth >= AppLayout.navigationBreakpoint
+                      ? Wrap(spacing: 8, runSpacing: 8, children: chips)
+                      : SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Row(
+                            children: chips
+                                .map((chip) => Padding(
+                                      padding: const EdgeInsets.only(right: 8),
+                                      child: chip,
+                                    ))
+                                .toList(),
+                          ),
+                        ),
+                ),
+              ],
+            ),
+          );
+        },
+      );
+
   @override
   Widget build(BuildContext context) {
     List<String> tab1 = ['电视', '电影', '综艺', '动漫', '少儿'];
@@ -85,158 +136,41 @@ class _MyClassificationPageState extends State<ClassificationPage> {
       '更新',
     ];
     return Scaffold(
-        appBar: AppBar(
-          title: const Text('分类'),
+      appBar: AppBar(title: const Text('分类')),
+      body: Align(
+        alignment: Alignment.topCenter,
+        child: ConstrainedBox(
+          constraints:
+              const BoxConstraints(maxWidth: AppLayout.contentMaxWidth),
+          child: LayoutBuilder(
+            builder: (context, constraints) => SingleChildScrollView(
+              padding: AppLayout.contentPadding(constraints.maxWidth),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _filterRow('类型', tab1, currentTab1Index,
+                      (index) => setState(() => currentTab1Index = index)),
+                  _filterRow('题材', tab1_1, currentTab2Index,
+                      (index) => setState(() => currentTab2Index = index)),
+                  _filterRow('地区', tab3, currentTab3Index,
+                      (index) => setState(() => currentTab3Index = index)),
+                  _filterRow('年份', tab4, currentTab4Index,
+                      (index) => setState(() => currentTab4Index = index)),
+                  _filterRow('排序', tab5, currentTab5Index,
+                      (index) => setState(() => currentTab5Index = index)),
+                  const Divider(height: 32),
+                  Center(
+                    child: FilledButton(
+                      onPressed: () {},
+                      child: const Text('没写完,捐赠加快进度'),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ),
-        body: Column(
-          children: [
-            SizedBox(
-              width: double.infinity,
-              height: 50,
-              child: CustomScrollView(
-                scrollDirection: Axis.horizontal,
-                slivers: [
-                  SliverList(
-                    delegate: SliverChildBuilderDelegate(
-                      (BuildContext context, int index) {
-                        return Padding(
-                          padding: const EdgeInsets.all(4.0),
-                          child: ChoiceChip(
-                            selected: index == currentTab1Index,
-                            onSelected: (value) {
-                              setState(() {
-                                currentTab1Index = index;
-                              });
-                            },
-                            label: Text(tab1[index]),
-                          ),
-                        );
-                      },
-                      childCount: tab1.length,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            SizedBox(
-              width: double.infinity,
-              height: 50,
-              child: CustomScrollView(
-                scrollDirection: Axis.horizontal,
-                slivers: [
-                  SliverList(
-                    delegate: SliverChildBuilderDelegate(
-                      (BuildContext context, int index) {
-                        return Padding(
-                          padding: const EdgeInsets.all(4.0),
-                          child: ChoiceChip(
-                            selected: index == currentTab2Index,
-                            onSelected: (value) {
-                              setState(() {
-                                currentTab2Index = index;
-                              });
-                            },
-                            label: Text(tab1_1[index]),
-                          ),
-                        );
-                      },
-                      childCount: tab1_1.length,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            SizedBox(
-              width: double.infinity,
-              height: 50,
-              child: CustomScrollView(
-                scrollDirection: Axis.horizontal,
-                slivers: [
-                  SliverList(
-                    delegate: SliverChildBuilderDelegate(
-                      (BuildContext context, int index) {
-                        return Padding(
-                          padding: const EdgeInsets.all(4.0),
-                          child: ChoiceChip(
-                            selected: index == currentTab3Index,
-                            onSelected: (value) {
-                              setState(() {
-                                currentTab3Index = index;
-                              });
-                            },
-                            label: Text(tab3[index]),
-                          ),
-                        );
-                      },
-                      childCount: tab3.length,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            SizedBox(
-              width: double.infinity,
-              height: 50,
-              child: CustomScrollView(
-                scrollDirection: Axis.horizontal,
-                slivers: [
-                  SliverList(
-                    delegate: SliverChildBuilderDelegate(
-                      (BuildContext context, int index) {
-                        return Padding(
-                          padding: const EdgeInsets.all(4.0),
-                          child: ChoiceChip(
-                            selected: index == currentTab4Index,
-                            onSelected: (value) {
-                              setState(() {
-                                currentTab4Index = index;
-                              });
-                            },
-                            label: Text(tab4[index]),
-                          ),
-                        );
-                      },
-                      childCount: tab4.length,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            SizedBox(
-              width: double.infinity,
-              height: 50,
-              child: CustomScrollView(
-                scrollDirection: Axis.horizontal,
-                slivers: [
-                  SliverList(
-                    delegate: SliverChildBuilderDelegate(
-                      (BuildContext context, int index) {
-                        return Padding(
-                          padding: const EdgeInsets.all(4.0),
-                          child: ChoiceChip(
-                            selected: index == currentTab5Index,
-                            onSelected: (value) {
-                              setState(() {
-                                currentTab5Index = index;
-                              });
-                            },
-                            label: Text(tab5[index]),
-                          ),
-                        );
-                      },
-                      childCount: tab5.length,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const Divider(),
-            Expanded(
-              child: Center(
-                  child: FilledButton(
-                      onPressed: () {}, child: const Text("没写完,捐赠加快进度"))),
-            )
-          ],
-        ));
+      ),
+    );
   }
 }

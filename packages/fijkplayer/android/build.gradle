@@ -1,0 +1,27 @@
+group 'com.befovy.fijkplayer'
+version '0.11.0'
+
+apply plugin: 'com.android.library'
+
+android {
+    namespace 'com.befovy.fijkplayer'
+    compileSdkVersion 36
+
+    defaultConfig {
+        minSdkVersion 16
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+    }
+    lintOptions {
+        disable 'InvalidPackage'
+    }
+}
+
+
+dependencies {
+
+    // implementation(name: 'fijkplayer-full-release', ext: 'aar')
+
+    // fijkplayer-full include the java lib and native shared libs for armv5 armv7 arm64 x86 x86_64
+    implementation 'com.befovy.fijkplayer:fijkplayer-full:0.7.16'
+    implementation 'androidx.annotation:annotation:1.2.0'
+}

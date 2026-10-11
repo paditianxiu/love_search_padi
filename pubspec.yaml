@@ -41,7 +41,8 @@ dependencies:
   dio: ^5.4.2+1
   cached_network_image: ^3.3.1
   html: ^0.15.4
-  fijkplayer: ^0.11.0
+  fijkplayer:
+    path: packages/fijkplayer
   flutter_svg: ^2.0.10+1
   url_launcher: ^6.2.5
   wakelock_plus: ^1.2.2
@@ -49,6 +50,8 @@ dependencies:
   media_kit: ^1.1.11 # Primary package.
   media_kit_video: ^1.2.5 # For video rendering.
   media_kit_libs_video: ^1.0.5 # Native video dependencies.
+  m3e_buttons: ^1.0.3
+  m3e_core: ^1.1.4
 
 
 dev_dependencies:
@@ -62,6 +65,7 @@ dev_dependencies:
   # rules and activating additional ones.
   flutter_lints: ^3.0.0
   icons_launcher: ^2.1.7
+  msix: ^3.18.0
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

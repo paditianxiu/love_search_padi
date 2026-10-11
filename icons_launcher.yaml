@@ -3,5 +3,5 @@ icons_launcher:
   platforms:
     android:
       enable: true
-    ios:
+    windows:
       enable: true

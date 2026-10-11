@@ -1,27 +1,27 @@
 // ignore_for_file: library_private_types_in_public_api, duplicate_ignore
 
-import 'dart:convert';
+import '../../models/saved_video.dart';
+import '../../models/video.dart' as models;
+import '../../services/video_library.dart';
+import '../../widgets/playback_layout.dart';
 
 import 'package:fijkplayer/fijkplayer.dart';
 import 'package:flutter/material.dart';
 
 //import 'package:wakelock/wakelock.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:media_kit/media_kit.dart'; // Provides [Player], [Media], [Playlist] etc.
 import 'package:media_kit_video/media_kit_video.dart'; // Provides [VideoController] & [Video] etc.
 import 'dart:io' as io;
 
 class FavoriteToggleIconButton extends StatefulWidget {
-  final Map<dynamic, dynamic> data;
-  final int pos;
+  final SavedVideo video;
   final Function() onStateChanged;
 
   const FavoriteToggleIconButton({
     super.key,
-    required this.data,
-    required this.pos,
+    required this.video,
     required this.onStateChanged,
   });
 
@@ -31,57 +31,48 @@ class FavoriteToggleIconButton extends StatefulWidget {
 }
 
 class _FavoriteToggleIconButtonState extends State<FavoriteToggleIconButton> {
-  late List<String> favoriteList;
+  final _library = VideoLibrary();
   bool isFavorite = false;
-  late String favoriteJsonString;
+  bool _loading = true;
 
   @override
   void initState() {
     super.initState();
+    _loadFavorites();
+  }
 
-    loadFavorites().then((value) {
+  Future<void> _loadFavorites() async {
+    try {
+      final videos = await _library.loadFavorites();
+      if (!mounted) return;
       setState(() {
-        favoriteList = value;
-        isFavorite = favoriteList.contains(_generateFavoriteJsonString());
+        isFavorite = videos.any((video) => video.url == widget.video.url);
+        _loading = false;
       });
-    });
-  }
-
-  Future<List<String>> loadFavorites() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    return prefs.getStringList('影视收藏') ?? [];
-  }
-
-  String _generateFavoriteJsonString() {
-    String resourceUrl = widget.data["资源网链接"];
-    String id = widget.data["影视ID"][widget.pos];
-    String allUrl = "$resourceUrl?ac=detail&ids=$id";
-
-    var jsonData = {
-      'url': allUrl,
-      'name': widget.data["标题"][widget.pos],
-      'imgUrl': widget.data["图片"][widget.pos],
-    };
-
-    return jsonEncode(jsonData);
-  }
-
-  void _toggleFavorite() async {
-    String newFavoriteJsonString = _generateFavoriteJsonString();
-
-    if (!isFavorite) {
-      favoriteList.add(newFavoriteJsonString);
-    } else {
-      favoriteList.remove(newFavoriteJsonString);
+    } catch (error) {
+      if (!mounted) return;
+      setState(() => _loading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('收藏加载失败：$error')),
+      );
     }
+  }
 
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    prefs.setStringList('影视收藏', favoriteList);
-    setState(() {
-      isFavorite = !isFavorite;
-    });
-
-    widget.onStateChanged();
+  Future<void> _toggleFavorite() async {
+    setState(() => _loading = true);
+    try {
+      await _library.setFavorite(widget.video, !isFavorite);
+      if (!mounted) return;
+      setState(() => isFavorite = !isFavorite);
+      widget.onStateChanged();
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('收藏保存失败：$error')),
+      );
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
   }
 
   @override
@@ -91,149 +82,91 @@ class _FavoriteToggleIconButtonState extends State<FavoriteToggleIconButton> {
       icon: isFavorite
           ? const Icon(Icons.favorite)
           : const Icon(Icons.favorite_border),
-      onPressed: _toggleFavorite,
+      onPressed: _loading ? null : _toggleFavorite,
     );
   }
 }
 
-// class MyScreen extends StatefulWidget {
-//   const MyScreen({super.key});
-//   @override
-//   State<MyScreen> createState() => MyScreenState();
-// }
-//
-// class MyScreenState extends State<MyScreen> {
-//   // Create a [Player] to control playback.
-//   late final player = Player();
-//   // Create a [VideoController] to handle video output from [Player].
-//   late final controller = VideoController(player);
-//
-//   @override
-//   void initState() {
-//     super.initState();
-//     // Play a [Media] or [Playlist].
-//     player.open(Media(
-//         'https://user-images.githubusercontent.com/28951144/229373695-22f88f13-d18f-4288-9bf1-c3e078d83722.mp4'));
-//   }
-//
-//   @override
-//   void dispose() {
-//     player.dispose();
-//     super.dispose();
-//   }
-//
-//   @override
-//   Widget build(BuildContext context) {
-//     return Center(
-//       child: SizedBox(
-//         width: MediaQuery.of(context).size.width,
-//         height: MediaQuery.of(context).size.width * 9.0 / 16.0,
-//         // Use [Video] widget to display video output.
-//         child: Video(controller: controller),
-//       ),
-//     );
-//   }
-// }
-
 class VideoScreen extends StatefulWidget {
-  final Map data;
-  final int pos;
+  final models.Video video;
+  final String resourceUrl;
 
-  const VideoScreen({super.key, required this.data, required this.pos});
+  const VideoScreen(
+      {super.key, required this.video, required this.resourceUrl});
 
   @override
   // ignore: library_private_types_in_public_api
   _VideoScreenState createState() => _VideoScreenState();
 }
 
-class _VideoScreenState extends State<VideoScreen>
-    with TickerProviderStateMixin {
-  late final player2 = Player();
-  // Create a [VideoController] to handle video output from [Player].
-  late final controller = VideoController(player2);
+class _VideoScreenState extends State<VideoScreen> {
+  Player? player2;
+  VideoController? controller;
 
-  late TabController _tabController;
   int currentCollection = 0;
-  FijkPlayer player = FijkPlayer();
+  String localSpeed = 'X1.0';
+  late final List<String> urlListNew;
+  late final SavedVideo _savedVideo;
+  FijkPlayer? player;
 
   _VideoScreenState();
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(vsync: this, length: 1);
-
+    _savedVideo = SavedVideo.fromVideo(widget.video, widget.resourceUrl);
+    urlListNew = widget.video.playbackUrls;
+    if (urlListNew.isNotEmpty) {
+      if (io.Platform.isAndroid) {
+        player = FijkPlayer();
+      } else {
+        player2 = Player();
+        controller = VideoController(player2!);
+      }
+      WakelockPlus.enable();
+      _playEpisode(0);
+    }
     setData();
-    //Wakelock.enable();
-    //player.setDataSource(widget.url, autoPlay: true);
   }
 
   @override
   void dispose() {
-    player2.dispose();
-    player.release();
-    WakelockPlus.disable();
+    player2?.dispose();
+    player?.release();
+    if (urlListNew.isNotEmpty) WakelockPlus.disable();
     super.dispose();
   }
 
-  setData() async {
-    String resourceUrl = widget.data["资源网链接"];
-    String id = widget.data["影视ID"][widget.pos];
-    String allUrl = "$resourceUrl?ac=detail&ids=$id";
-    var jsonData = {
-      'url': allUrl,
-      'name': widget.data["标题"][widget.pos],
-      'imgUrl': widget.data["图片"][widget.pos],
-    };
-    String jsonString = jsonEncode(jsonData);
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    List<String>? historyList = prefs.getStringList('历史记录') ?? [];
-    if (!historyList.contains(jsonString)) {
-      historyList.add(jsonString);
-    } else {
-      historyList.remove(jsonString);
-      historyList.add(jsonString);
+  Future<void> setData() async {
+    try {
+      await VideoLibrary().recordHistory(_savedVideo);
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('历史记录保存失败：$error')),
+      );
     }
-    prefs.setStringList('历史记录', historyList);
+  }
+
+  Future<void> _playEpisode(int index) async {
+    if (io.Platform.isAndroid) {
+      if (index != currentCollection) await player!.reset();
+      if (!mounted) return;
+      await player!.setDataSource(urlListNew[index], autoPlay: true);
+    } else {
+      await player2!.open(Media(urlListNew[index]));
+    }
+    if (mounted) setState(() => currentCollection = index);
   }
 
   @override
   Widget build(BuildContext context) {
-    WakelockPlus.enable();
-    List<String> urlListOld;
-
-    if (widget.data["播放地址"][widget.pos].toString().contains("\$\$\$")) {
-      urlListOld = widget.data["播放地址"][widget.pos]
-          .toString()
-          .split("\$\$\$")[1]
-          .split("#");
-    } else {
-      urlListOld = widget.data["播放地址"][widget.pos].toString().split("#");
-    }
-    var brief = widget.data["简介"][widget.pos]
-        .toString()
+    final brief = widget.video.content
         .replaceAll(" ", "")
         .replaceAll("<p>", "")
         .replaceAll("<br/>", "")
         .replaceAll("　", "")
         .replaceAll("</p>", "");
-
-    var urlListNew = [];
-    urlListNew.clear();
-    for (var element in urlListOld) {
-      RegExp regExp = RegExp(r'\$(.*)');
-      Match? match = regExp.firstMatch(element);
-      if (match != null) {
-        String url = match.group(1)!;
-        urlListNew.add(url);
-      } else {}
-    }
-    if (io.Platform.isAndroid) {
-      player.setDataSource(urlListNew[currentCollection], autoPlay: true);
-    }
-    if (io.Platform.isWindows) {
-      player2.open(Media(urlListNew[currentCollection]));
-    }
 
     final List<double> speedList = [
       0.5,
@@ -242,18 +175,17 @@ class _VideoScreenState extends State<VideoScreen>
       2.0,
     ];
     final List<String> menuOptions = ['X0.5', 'X1.0', 'X1.5', 'X2.0'];
-    var localSpeed = "X1.0";
     return Scaffold(
         appBar: AppBar(
           actions: [
             // IconButton(tooltip: "倍数", onPressed: (){}, icon: Icon(Icons.speed)),
             PopupMenuButton(
               onSelected: (String result) {
-                localSpeed = result;
+                setState(() => localSpeed = result);
                 if (io.Platform.isAndroid) {
-                  player.setSpeed(speedList[menuOptions.indexOf(result)]);
+                  player?.setSpeed(speedList[menuOptions.indexOf(result)]);
                 } else {
-                  player2.setRate(speedList[menuOptions.indexOf(result)]);
+                  player2?.setRate(speedList[menuOptions.indexOf(result)]);
                 }
               },
               icon: const Icon(Icons.speed),
@@ -276,14 +208,14 @@ class _VideoScreenState extends State<VideoScreen>
                 );
               }).toList(),
             ),
-            FavoriteToggleIconButton(
-                data: widget.data, pos: widget.pos, onStateChanged: () {}),
+            FavoriteToggleIconButton(video: _savedVideo, onStateChanged: () {}),
             const SizedBox(width: 10)
           ],
           title: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(widget.data["标题"][widget.pos]),
+              Text(widget.video.name,
+                  maxLines: 1, overflow: TextOverflow.ellipsis),
               const SizedBox(height: 4.0),
               Text(
                 "第${currentCollection + 1}集",
@@ -292,122 +224,78 @@ class _VideoScreenState extends State<VideoScreen>
             ],
           ),
         ),
-        body: LayoutBuilder(
-            builder: (BuildContext context, BoxConstraints constraints) {
-          var currentHeight = MediaQuery.of(context).size.height;
-          return Column(
+        body: PlaybackLayout(
+          player: urlListNew.isEmpty
+              ? const Center(
+                  child: Text(
+                    '暂无可播放的剧集',
+                    style: TextStyle(color: Colors.white),
+                  ),
+                )
+              : io.Platform.isAndroid
+                  ? FijkView(color: Colors.black, player: player!)
+                  : Video(controller: controller!),
+          information: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                width: double.infinity,
-                height: currentHeight / 3,
-                alignment: Alignment.center,
-                child: io.Platform.isAndroid
-                    ? FijkView(
-                        color: Colors.black,
-                        player: player,
-                      )
-                    : Video(controller: controller),
+              Text(
+                widget.video.name,
+                style: Theme.of(context).textTheme.titleLarge,
               ),
-              SizedBox(
-                  width: double.infinity,
-                  child: Padding(
-                    padding: const EdgeInsets.all(4.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          widget.data["标题"][widget.pos],
-                          style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 20,
-                              color: Colors.black),
-                          //textAlign: TextAlign.left,
+              const SizedBox(height: 8),
+              Text(
+                widget.video.subtitle,
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+              if (brief.isNotEmpty) ...[
+                const SizedBox(height: 8),
+                InkWell(
+                  onTap: () => showDialog<void>(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                      title: const Text('简介'),
+                      content: SizedBox(
+                        width: 560,
+                        child: SingleChildScrollView(child: Text(brief)),
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.of(context).pop(),
+                          child: const Text('确定'),
                         ),
-                        Text(
-                          widget.data["副标题"][widget.pos],
-                          //textAlign: TextAlign.left,
-                        ),
-                        GestureDetector(
-                          onTap: () {
-                            showDialog<void>(
-                                context: context,
-                                barrierDismissible: false,
-                                builder: (BuildContext context) {
-                                  return AlertDialog(
-                                    title: const Text('简介'),
-                                    content: SingleChildScrollView(
-                                      child: ListBody(
-                                        children: <Widget>[
-                                          Text(brief),
-                                        ],
-                                      ),
-                                    ),
-                                    actions: <Widget>[
-                                      TextButton(
-                                        child: const Text('确定'),
-                                        onPressed: () {
-                                          Navigator.of(context).pop();
-                                        },
-                                      ),
-                                    ],
-                                  );
-                                });
-                          },
-                          child: Text(
-                            maxLines: 5,
-                            overflow: TextOverflow.ellipsis,
-                            brief,
-                            //textAlign: TextAlign.left,
-                          ),
-                        )
                       ],
                     ),
-                  )),
-              TabBar(
-                  tabAlignment: TabAlignment.start,
-                  controller: _tabController,
-                  isScrollable: true,
-                  tabs: const [
-                    Tab(
-                      text: 'M3U8',
-                    ),
-                  ]),
-              Expanded(child: LayoutBuilder(
-                  builder: (BuildContext context, BoxConstraints constraints) {
-                var currentWidth = MediaQuery.of(context).size.width;
-                return GridView.builder(
-                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      childAspectRatio: 2.7,
-                      crossAxisCount: (currentWidth ~/ 130),
-                    ),
-                    itemCount: urlListNew.length,
-                    itemBuilder: (BuildContext context, int index) {
-                      return Padding(
-                        padding: const EdgeInsets.all(4.0),
-                        child: OutlinedButton.icon(
-                            icon: currentCollection == index
-                                ? const Icon(Icons.check)
-                                : const SizedBox.shrink(),
-                            onPressed: () async {
-                              if (currentCollection != index) {
-                                if (io.Platform.isAndroid) {
-                                  await player.reset();
-                                  player.setDataSource(urlListNew[index],
-                                      autoPlay: true);
-                                } else {
-                                  player2.open(Media(urlListNew[index]));
-                                }
-                                setState(() {
-                                  currentCollection = index;
-                                });
-                              }
-                            },
-                            label: Text("第${index + 1}集")),
-                      );
-                    });
-              })),
+                  ),
+                  child: Text(
+                    brief,
+                    maxLines: 4,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
+                ),
+              ],
             ],
-          );
-        }));
+          ),
+          episodeCount: urlListNew.length,
+          episodeBuilder: (context, index) => OutlinedButton.icon(
+            style: OutlinedButton.styleFrom(
+              backgroundColor: currentCollection == index
+                  ? Theme.of(context).colorScheme.secondaryContainer
+                  : null,
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+            ),
+            icon: currentCollection == index
+                ? const Icon(Icons.check, size: 16)
+                : const SizedBox.shrink(),
+            onPressed: () async {
+              if (currentCollection != index) await _playEpisode(index);
+            },
+            label: Text(
+              '第${index + 1}集',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ));
   }
 }
