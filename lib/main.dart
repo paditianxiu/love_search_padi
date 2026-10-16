@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import './MyApp.dart';
 // ignore: depend_on_referenced_packages
 import 'package:media_kit/media_kit.dart';
+import 'my_app.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();

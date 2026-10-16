@@ -4,7 +4,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../models/search_source.dart';
 import '../models/video.dart';
-import '../pages/player/main.dart';
+import '../pages/player/player.dart';
 import '../services/movie_api.dart';
 import 'movie_card.dart';
 import 'responsive_movie_grid.dart';

@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../models/saved_video.dart';
 import '../models/video.dart';
-import '../pages/player/main.dart';
+import '../pages/player/player.dart';
 import '../services/movie_api.dart';
 import 'movie_card.dart';
 import 'responsive_movie_grid.dart';
